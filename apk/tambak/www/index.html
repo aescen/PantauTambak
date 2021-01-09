@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui">
+	<!-- Your app title -->
+    <title>Tambak</title>
+	<link rel="icon" type="image/png" href="./img/logo.png">
+    <!-- Path to Framework7 Library Bundle CSS -->
+    <link rel="stylesheet" href="./framework7/css/framework7.md.min.css">
+	<!-- Path to Framework7 Icons CSS -->
+	<link rel="stylesheet" href="./framework7/css/framework7-icons.css">
+    <!-- Path to your custom app styles-->
+    <link rel="stylesheet" href="./css/my-app.css">
+	<!-- Load TensorFlow.js. This is required to use coco-ssd model. -->
+	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+	<!-- Load the coco-ssd model. -->
+	<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"> </script>
+  </head>
+  <body>
+    <!-- App root element -->
+    <div id="app">
+      <!-- Statusbar overlay -->
+      <div class="statusbar"></div>
+	  <!-- Panel element -->
+	  <div class="panel panel-left panel-cover">
+		<div class="navbar">
+			<div class="navbar-inner">
+				<div class="title left">Menu</div>
+			</div>
+		</div>
+        <div class="list links-list left">
+			<ul>
+				<li><a href="#" class="panel-close link back">
+						<div class="item-content">
+							<div class="item-media"><i class="f7-icons left">home</i></div>
+							<div class="item-inner">
+								<div class="item-title">Main</div>
+							</div>
+						</div>
+					</a>
+				</li>
+				<li><a href="/about/" class="panel-close">
+						<div class="item-content">
+							<div class="item-media"><i class="f7-icons left">info_round</i></div>
+							<div class="item-inner">
+								<div class="item-title">About</div>
+							</div>
+						</div>
+					</a>
+				</li>
+			</ul>
+		</div>
+	  </div>
+
+      <!-- Your main view, should have "view-main" class -->
+      <div class="view view-main view-init">
+        <!-- Initial Page, "data-name" contains page name -->
+        <div data-name="index" class="page">
+		
+          <!-- Top Navbar -->
+          <div class="navbar">
+            <div class="navbar-inner">
+				<div class="left">
+					<a href="#" class="link panel-open">
+						<i class="f7-icons">menu</i>
+					</a>
+				</div>
+				<div class="title center">Monitoring Tambak</div>
+				<div class="right"></div>
+            </div>
+          </div>
+
+          <!-- Page content -->
+          </br></br></br>
+		  <div class="card">
+			<div class="card-header">Camera</div>
+			<div class="card-content card-content-padding">
+				<!--<iframe src="http://192.168.11.1/tambak/video.php" frameborder="0" scrolling="no" seamless="seamless" width="320px" height="240px"></iframe>-->
+				<!--<video width="100%" height="100%" controls>
+					<source src="example_01.mp4" type="video/mp4">
+					Your browser does not support the video tag.
+				</video>-->
+				<!-- Replace this with your image. Make sure CORS settings allow reading the image! -->
+				<img id="img" src="http://192.168.11.20/mjpeg.cgi?user=admin&password=" alt="http://192.168.11.20/mjpeg.cgi?user=admin&password=" style="width:320px;height:240px;">
+				<canvas id="canvas" style="width:320px;height:240px;"></canvas>
+			</div>
+			<div class="card-footer">Motion : <span id="motion" name="motion">...</span></div>
+			<div class="card-footer">PIR 1 : <span id="pir1" name="pir1">...</span></div>
+			<div class="card-footer">PIR 2 : <span id="pir2" name="pir2">...</span></div>
+		  </div>
+		  
+        </div>
+      </div>
+    </div>
+
+    <!-- Path to Framework7 Library Bundle JS-->
+    <script type="text/javascript" src="./framework7/js/framework7.min.js"></script>
+	<!-- Path to your app jss-->
+	<script type="text/javascript" src="./js/my-app.js"></script>
+	<!-- Place your code in the script tag below. You can also use an external .js file -->
+	<script>
+	  // Notice there is no 'import' statement. 'cocoSsd' and 'tf' is
+	  // available on the index-page because of the script tag above.
+	  
+	  const video = document.getElementById("img")
+		
+	  //const img = document.getElementById('img');
+
+	  // Load the model.
+	  cocoSsd.load().then(model => {
+		// detect objects in the image.
+		model.detect(video).then(prediction => {
+			console.log('Predictions: ', prediction);
+			var x = prediction[0].bbox[0];
+			var y = prediction[0].bbox[1];
+			var width = prediction[0].bbox[2];
+			var height = prediction[0].bbox[3];
+			var c=document.getElementById("canvas");
+			var ctx=c.getContext("2d");  
+			ctx.drawImage(img,10,10);
+			var canvas = document.getElementById('canvas');
+			var context = canvas.getContext('2d');
+			context.strokeRect(x, y, width, height);
+			
+			detectFrame = (video, model) => {
+				model.detect(video).then(prediction => {
+				this.renderPredictions(prediction);
+					requestAnimationFrame(() => {
+						this.detectFrame(video, model);
+						x = prediction[0].bbox[0];
+						y = prediction[0].bbox[1];
+						width = prediction[0].bbox[2];
+						height = prediction[0].bbox[3];
+						context.strokeRect(x, y, width, height);
+					});
+				});
+			};
+		});				
+	  });
+	</script>
+  </body>
+</html>
